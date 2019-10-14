@@ -17,6 +17,15 @@ struct Student{
 	char name[MAX];
 	char number[11];
 };
+struct Date{
+	char date[3];
+	char mo[3];
+	char yr[3];
+};
+struct Time{
+	char hr[3];
+	char min[3];
+};
 
 void clear_screen(){
 	system("cls");
@@ -25,6 +34,11 @@ void clear_screen(){
 
 char *separ(){
 	return "----------------------------------------------";
+}
+
+void err_txt(){
+	printf("Input yang dimasukkan salah. Silahkan coba kembali\n%s\n",separ());
+	return;
 }
 
 void fetch_char(char *target){
@@ -88,40 +102,167 @@ void disp_mem(int n){
 	return;
 }
 
+int hasLen(char *str,int len){
+	if(strlen(str)==len) return 1;
+	return 0;
+}
+
+int parse_day(char day[]){
+	char list_of_day[][3]={"Min","Sen","Sel","Rab","Kam","Jum","Sab"};
+	int len=sizeof(list_of_day)/sizeof(list_of_day[0]);
+	for(int i=0;i<len;i++){
+		if(*list_of_day[i]==*day) return i;
+	}
+	return -1;
+}
+
+int isTruePeriod(char *period){
+	int len,cnt,date,mo,yr,
+		day_in_a_month[13]={0,31,28,31,30,31,30,31,31,30,31,30,31};
+	struct Date start,end;
+	len=strlen(period);
+	if(len!=19) return 0;
+	cnt=sscanf(period,"%s %s %s - %s %s %s",
+		&start.date,&start.mo,&start.yr,&end.date,&end.mo,&end.yr
+	);
+	if(cnt!=6) return 0;
+	if(isNum(start.date)&&hasLen(start.date,2)) date=parse(start.date);
+	else return 0;
+	if(isNum(start.mo)&&hasLen(start.mo,2)) mo=parse(start.mo);
+	else return 0;
+	if(isNum(start.yr)&&hasLen(start.yr,2)) yr=parse(start.yr);
+	else return 0;
+	if(date<1||date>((yr%4==0&&mo==2)?29:day_in_a_month[mo])) return 0;
+	if(mo<1||mo>12) return 0;
+	if(isNum(end.date)&&hasLen(end.date,2)) date=parse(end.date);
+	else return 0;
+	if(isNum(end.mo)&&hasLen(end.mo,2)) mo=parse(end.mo);
+	else return 0;
+	if(isNum(end.yr)&&hasLen(end.yr,2)) yr=parse(end.yr);
+	else return 0;
+	if(date<1||date>((yr%4==0&&mo==2)?29:day_in_a_month[mo])) return 0;
+	if(mo<1||mo>12) return 0;
+	return 1;
+}
+
+int isTrueTime(char *time){
+	int len,cnt,hr,min;
+	char day[4];
+	struct Time start,end;
+	len=strlen(time);
+	if(len!=15) return 0;
+	cnt=sscanf(time,"%s %[^:]:%[^-]-%[^:]:%s",
+		day,&start.hr,&start.min,&end.hr,&end.min);
+	if(cnt!=5) return 0;
+	if(parse_day(day)==-1) return 0;
+	if(isNum(start.hr)&&hasLen(start.hr,2)) hr=parse(start.hr);
+	else return 0;
+	if(isNum(start.min)&&hasLen(start.min,2)) min=parse(start.min);
+	else return 0;
+	if(hr<0||hr>23) return 0;
+	if(min<0||min>59) return 0;
+	if(isNum(end.hr)&&hasLen(end.hr,2)) hr=parse(end.hr);
+	else return 0;
+	if(isNum(end.min)&&hasLen(end.min,2)) min=parse(end.min);
+	else return 0;
+	if(hr<0||hr>23) return 0;
+	if(min<0||min>59) return 0;
+	return 1;
+}
+
+int about_to_back(char resp[]){
+	if(strlen(resp)==1&&(int)resp[0]=='\\') return 1;
+	return 0;
+}
+
+void back_txt(){
+	printf("(Untuk kembali, masukkan tanda \"\\\")\n");
+	return;
+}
+
 char *matkul_info(){
-	int sks;
+	int error=0;
 	static char mk[MAX];
-	char periode[MAX],waktu[MAX];
+	char periode[MAX],waktu[MAX],sks[MAX],temp[MAX];
 	clear_screen();
+	back_txt();
 	printf("Masukkan nama mata kuliah: ");
-	scanf(" %[^\n]",&mk);
-	printf("Jumlah SKS: ");
-	scanf("\n%d",&sks);
-	set_txt(3,
-		"Masukkan periode perkuliahan...",
-		"Format: (Tanggal mulai) - (Tanggal selesai)",
-		"Format tanggal: \"dd mm yy\""
-	);
-	scanf(" %[^\n]",&periode);
-	set_txt(2,
-		"Masukkan waktu perkuliahan...",
-		"Format: (3 huruf pertama hari) (jam mulai):(menit mulai)-(jam selesai):(menit selesai)"
-	);
-	scanf(" %[^\n]",&waktu);
+	scanf(" %[^\n]",&temp);
+	if(about_to_back(temp)) return "\b";
+	strcpy(mk,temp);
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		printf("Jumlah SKS: ");
+		scanf("\n%s",&temp);
+		if(about_to_back(temp)) return "\b";
+		strcpy(sks,temp);
+		if(isNum(sks)) break;
+		error=1;
+	}
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		set_txt(3,
+			"Masukkan periode perkuliahan...",
+			"Format: (Tanggal mulai) - (Tanggal selesai)",
+			"Format tanggal: \"dd mm yy\""
+		);
+		scanf(" %[^\n]",&temp);
+		if(about_to_back(temp)) return "\b";
+		strcpy(periode,temp);
+		if(isTruePeriod(periode)) break;
+		error=1;
+	}
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		set_txt(2,
+			"Masukkan waktu perkuliahan...",
+			"Format: (3 huruf pertama hari) (jam mulai):(menit mulai)-(jam selesai):(menit selesai)"
+		);
+		scanf(" %[^\n]",&temp);
+		if(about_to_back(temp)) return "\b";
+		strcpy(waktu,temp);
+		if(isTrueTime(waktu)) break;
+		error=1;
+	}
 	fp=fopen("matkul.csv","a");
-	fprintf(fp,"%s;%d;%s;%s\n",mk,sks,periode,waktu);
+	fprintf(fp,"%s;%d;%s;%s\n",mk,parse(sks),periode,waktu);
 	fclose(fp);
 	return mk;
 }
 
 void input_student(struct Student *x,int *n){
 	clear_screen();
+	int error=0;
 	char temp[MAX];
+	back_txt();
 	printf("Masukkan nama mahasiswa: ");
 	scanf(" %[^\n]",&temp);
+	if(about_to_back(temp)) return;
 	strcpy(x->name,temp);
-	printf("Masukkan NPM: ");
-	scanf(" %[^\n]",&temp);
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		printf("Masukkan NPM: ");
+		scanf(" %[^\n]",&temp);
+		if(about_to_back(temp)) return;
+		if(isNum(temp)&&hasLen(temp,10)) break;
+		error=1;
+	}
 	strcpy(x->number,temp);
 	(*n)++;
 	return;
@@ -137,11 +278,15 @@ void write_class(char mk[],struct Student student[],int n){
 }
 
 void matkul_students(char mk[]){
-	int n=0,exit=0;
+	int n=0,exit=0,error=0;
 	char resp;
 	struct Student student[MAX];
 	while(!exit){
 		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
 		printf("Daftar mahasiswa di kelas %s:\n",mk);
 		if(n==0) printf("--- Tidak ada mahasiswa terdaftar ---\n");
 		else{
@@ -159,6 +304,7 @@ void matkul_students(char mk[]){
 		switch(resp){
 			case 'A':case 'a':input_student(&student[n],&n);break;
 			case 'B':case 'b':exit=1;break;
+			default:error=1;
 		}
 	}
 	write_class(mk,student,n);
@@ -167,24 +313,14 @@ void matkul_students(char mk[]){
 
 void add_matkul(){
 	char *mk=matkul_info();
+	if(mk=="\b") return;
 	matkul_students(mk);
 	return;
 }
 
-int parse_day(char day[]){
-	char list_of_day[][3]={"Min","Sen","Sel","Rab","Kam","Jum","Sab"};
-	int len=sizeof(list_of_day)/sizeof(list_of_day[0]);
-	for(int i=0;i<len;i++){
-		if(*list_of_day[i]==*day) return i;
-	}
-}
-
 int in_range_time(int mk,time_t t){
 	struct tm *curr=localtime(&t);
-	struct Time{
-		char hr[3];
-		char min[3];
-	} start,end;
+	struct Time start,end;
 	char day[4];
 	int curr_min=(curr->tm_hour)*60+curr->tm_min,start_min,end_min;
 	sscanf(_waktu[mk],"%s %[^:]:%[^-]-%[^:]:%[^\0]",
@@ -198,11 +334,7 @@ int in_range_time(int mk,time_t t){
 }
 
 int in_range_period(int mk,time_t curr_secs){
-	struct A{
-		char date[3];
-		char mo[3];
-		char yr[3];
-	} s_info,e_info;
+	struct Date s_info,e_info;
 	time_t start_secs,end_secs;
 	sscanf(_periode[mk],"%s %s %s - %s %s %s",
 		&s_info.date,&s_info.mo,&s_info.yr,&e_info.date,&e_info.mo,&e_info.yr
@@ -217,8 +349,8 @@ int in_range_period(int mk,time_t curr_secs){
 	return 1;
 }
 
-void start_presence(int mk,time_t t){
-	int i=1;
+char start_presence(int mk,time_t t){
+	int i=1,error=0,exit=0;
 	char fname[MAX],temp_mhs[MAX],temp_npm[MAX],resp;
 	struct tm *curr=localtime(&t);
 	FILE* fq;
@@ -227,6 +359,8 @@ void start_presence(int mk,time_t t){
 		"\"h\" apabila mahasiswa tersebut hadir, sebaliknya \"t\"",
 		separ()
 	);
+	back_txt();
+	printf("%s",separ());
 	strcpy(fname,_mk[mk]);
 	strcat(fname," (Presensi).csv");
 	fp=fopen(fname,"a");
@@ -235,17 +369,30 @@ void start_presence(int mk,time_t t){
 	strcat(fname," (Mahasiswa).csv");
 	fq=fopen(fname,"r");
 	while(fscanf(fq,"%[^;];%[^\n]\n",&temp_mhs,&temp_npm)!=EOF){
-		printf("\n%d. %s %s (Hadir/tidak hadir) ",i,temp_mhs,temp_npm);
-		fetch_char(&resp);
-		switch(resp){
-			case 'h':case 'H':
-				fprintf(fp,";1");
-				i++;
-			break;
-			case 't':case 'T':
-				fprintf(fp,";0");
-				i++;
-			break;
+		while(1){
+			if(error==1){
+				err_txt();
+				error=0;
+			}
+			printf("\n%d. %s %s (Hadir/tidak hadir) ",i,temp_mhs,temp_npm);
+			fetch_char(&resp);
+			switch(resp){
+				case 'h':case 'H':
+					fprintf(fp,";1");
+					i++;
+					exit=1;
+				break;
+				case 't':case 'T':
+					fprintf(fp,";0");
+					i++;
+					exit=1;
+				break;
+				case '\\':return '\b';break;
+				default:
+					clear_screen();
+					error=1;
+			}
+			if(exit==1) break;
 		}
 	}
 	fprintf(fp,"\n");
@@ -253,7 +400,7 @@ void start_presence(int mk,time_t t){
 	fclose(fp);
 	clear_screen();
 	printf("Presensi selesai\n");
-	return;
+	return '\0';
 }
 
 void presence_check(int mk){
@@ -262,7 +409,7 @@ void presence_check(int mk){
 	clear_screen();
 	time(&curr_time);
 	if(in_range_time(mk,curr_time)&&in_range_period(mk,curr_time))
-		start_presence(mk,curr_time);
+		resp=start_presence(mk,curr_time);
 	else{
 		set_txt(7,
 			"Tidak dapat melakukan presensi",
@@ -274,6 +421,7 @@ void presence_check(int mk){
 			separ()
 		);
 	}
+	if(resp=='\b') return;
 	printf("Tekan apa saja untuk melanjutkan");
 	fetch_char(&resp);
 	return;
@@ -355,12 +503,64 @@ void view_presence(int idx_mk){
 	return;
 }
 
-int expand_matkul(int mk){
-	int i;
+int confirm_delete(int mk){
+	char resp;
+	int error=0;
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		printf("Anda yakin ingin menghapus mata kuliah \"%s\"? (y/t) ",_mk[mk]);
+		fetch_char(&resp);
+		switch(resp){
+			case 'y':case 'Y':return 1;break;
+			case 't':case 'T':return 0;break;
+			default:error=1;
+		}
+	}
+}
+
+void delete_matkul(int mk){
+	FILE *fq;
+	char temp[512],filename[512],resp,
+		suff[2][32]={" (Mahasiswa).csv"," (Presensi).csv"};
+	int i=0,ln;
+	if(!confirm_delete(mk)) return;
+	fp=fopen("matkul.csv","r");
+	fq=fopen("t","w+");
+	ln=mk+1;
+	while(fscanf(fp,"%[^\n]\n",temp)!=EOF){
+		i++;
+		if(i!=ln) fprintf(fq,"%s\n",temp);
+	}
+	fclose(fp);
+	fclose(fq);
+	remove("matkul.csv");
+	rename("t","matkul.csv");
+	for(i=0;i<2;i++){
+		strcpy(filename,_mk[mk]);
+		strcat(filename,suff[i]);
+		remove(filename);
+	}
+	clear_screen();
+	printf("Mata kuliah \"%s\" sudah terhapus\n",_mk[mk]);
+	printf("Tekan apa saja untuk melanjutkan\n");
+	fetch_char(&resp);
+	return;
+}
+
+void expand_matkul(int mk){
+	int i,error=0;
 	char resp,temp1[MAX],temp2[11],fname[MAX];
 	mk--;
 	while(1){
 		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
 		printf("Nama mata kuliah: %s\n",_mk[mk]);
 		printf("Jumlah SKS: %d\n",_sks[mk]);
 		printf("Periode perkuliahan: %s\n",_periode[mk]);
@@ -377,96 +577,119 @@ int expand_matkul(int mk){
 			printf("%d. %s %s\n",i,temp1,temp2);
 		}
 		fclose(fp);
-		set_txt(4,
+		set_txt(5,
 			separ(),
 			"A. Mulai presensi (Harus dilakukan pada jam perkuliahan)",
 			"B. Lihat presensi",
-			"C. Kembali"
+			"X. Hapus mata kuliah ini",
+			"Y. Kembali"
 		);
 		fetch_char(&resp);
 		switch(resp){
 			case 'A':case 'a':presence_check(mk);break;
 			case 'B':case 'b':view_presence(mk);break;
-			case 'C':case 'c':return 0;break;
+			case 'X':case 'x':
+				delete_matkul(mk);
+				return;
+			break;
+			case 'Y':case 'y':return;break;
+			default:error=1;
 		}
 	}
 }
 
-int main_menu(){
-	clear_screen();
-	fp=fopen("matkul.csv","r");
-	set_txt(3,
-		"Berikut mata kuliah yang Anda ampu:",
-		separ(),
-		"No | Mata kuliah | SKS"
+void main_menu(){
+	int count_mk,len,error=0;
+	while(1){
+		clear_screen();
+		if(error==1){
+			err_txt();
+			error=0;
+		}
+		fp=fopen("matkul.csv","r");
+		set_txt(3,
+			"Berikut mata kuliah yang Anda ampu:",
+			separ(),
+			"No | Mata kuliah | SKS"
+		);
+		count_mk=0;
+		char resp[MAX];
+		input_file(&count_mk);
+		fclose(fp);
+		disp_mem(count_mk);
+		set_txt(3,separ(),"A. Tambah mata kuliah baru","B. Keluar");
+		scanf("%s",&resp);
+		len=strlen(resp);
+		if(len==1){
+			switch(resp[0]){
+				case 'A':case 'a':add_matkul();break;
+				case 'B':case 'b':return;break;
+				default:
+					if(isNum(resp)&&parse(resp)<=count_mk)
+						expand_matkul(parse(resp));
+					else error=1;
+				break;
+			}
+		}
+		else error=1;
+	}
+}
+
+void banner(){
+	set_txt(36,
+		"\t\t                        ***                       ",
+		"\t\t                      *******                     ",
+		"\t\t                 ****************                 ",
+		"\t\t           **** ****** ***** ****** ***           ",
+		"\t\t          **** *****   *****  ****** ****         ",
+		"\t\t         ****  *****  ******   ***** *****        ",
+		"\t\t     **  ***** ******  *****  *****  ***** **     ",
+		"\t\t     **  ******  ***** ***** *****  ******  **    ",
+		"\t\t     ***  *******   ***** ****    *******  ***    ",
+		"\t\t  ** *****   ********  ** **  ********   ***** ** ",
+		"\t\t  ***  ****         *** *** ***         ****  *** ",
+		"\t\t  *****************    *****    ***************** ",
+		"\t\t** **********     ***   ***   ***     ********** *",
+		"\t\t **    *            **  ***  **                ***",
+		"\t\t* ******   ********  ** *** *   ********   ****** ",
+		"\t\t**      *****      ** ******* **      *****      *",
+		"\t\t *********     **** *********** ****     *********",
+		"\t\t  *****        * **  *********  ** *        ****  ",
+		"\t\t ******          **  ***   **   **          ***** ",
+		"\t\t  ****          ***  *** * ***  ***         ****  ",
+		"\t\t   ****         ******************          ****  ",
+		"\t\t     ****    ******** **  *** ********    ****    ",
+		"\t\t      *   ******   **** *** ****   ******   *     ",
+		"\t\t            * *    *************    * * *         ",
+		"\t\t      ***************************************     ",
+		"\t\t         **********   *******   **********        ",
+		"\t\t          ********   ***   ***  ********          ",
+		"\t\t            ****************** ********           ",
+		"\t\t                  *   **   **  **                 ",
+		"\t\t_____________________________________________",
+		"\t\t||\tSelamat datang di Program Presensi  ||",
+		"\t\t||\t	A Mini-Project by:          ||",
+		"\t\t||\t   Gilbert Parluhutan Siagian       ||",
+		"\t\t||\t	Alvin Audinata              ||",
+		"\t\t||__________________________________________||",
+		"Press Any Key To Continue"
 	);
-	int count_mk=0,len;
-	char resp[MAX];
-	input_file(&count_mk);
-	fclose(fp);
-	disp_mem(count_mk);
-	set_txt(3,separ(),"A. Tambah mata kuliah baru","B. Keluar");
-	scanf("%s",&resp);
-	len=strlen(resp);
-	if(len==1&&(resp[0]=='A'||resp[0]=='B')){
-		if(resp[0]=='A') add_matkul();
-		else if(resp[0]=='B') return 1;
-	}
-	else if(isNum(resp)&&parse(resp)<=count_mk){
-		return expand_matkul(parse(resp));
-	}
-	else return 0;
+	return;
 }
 
 void main_page(){
 	char resp;
 	clear_screen();
-	printf("\t\t                        707                       \n");
-	printf("\t\t                      7772777                     \n");
-	printf("\t\t                 7488888808888885                 \n");
-	printf("\t\t           7487 888887 50087 588885 285           \n");
-	printf("\t\t          8882 88008   80488  780082 8885         \n");
-	printf("\t\t         8888  88098  780408   89088 78884        \n");
-	printf("\t\t     78  88982 788884  80488  88888  08488 78     \n");
-	printf("\t\t     88  880082  70888 28887 88847  080888  88    \n");
-	printf("\t\t     885  4888887   79881 8882    4888882  888    \n");
-	printf("\t\t  87 28887   77488827  97 87  74888177   78887 80 \n");
-	printf("\t\t  887  7727         797 074 447         7277  288 \n");
-	printf("\t\t  88885272240809557    88884    25408880522508885 \n");
-	printf("\t\t77 7088880577     780   880   887     7750888047 7\n");
-	printf("\t\t 58    7            28  882  87                787\n");
-	printf("\t\t7 488807   78847727  72 082 8   27774887   788882 \n");
-	printf("\t\t87      78887      87 2748777 41      78887      5\n");
-	printf("\t\t 288908882     8887 89788888787 2888     488808887\n");
-	printf("\t\t  77227        7 88  888777882  81 7        7227  \n");
-	printf("\t\t 782772          88  788   88   84          27728 \n");
-	printf("\t\t  7277          884  787 8 787  882         7772  \n");
-	printf("\t\t   7772         788274898889847588          2777  \n");
-	printf("\t\t     7757    77272777 58  787 77777777    7277    \n");
-	printf("\t\t      7   477782   4527 787 7245   547771   7     \n");
-	printf("\t\t            7 8    7777404817777    0 7 7         \n");
-	printf("\t\t      887882727545227727222227224445777288788     \n");
-	printf("\t\t         4452777777   8827488   7777772541        \n");
-	printf("\t\t          72225557   888   884  77451222          \n");
-	printf("\t\t            777777877887777288 08777777           \n");
-	printf("\t\t                  7   57   75  77                 \n");
-	printf("\t\t_____________________________________________\n");
-	printf("\t\t||\tSelamat datang di Program Presensi  ||\n");
-	printf("\t\t||\t	A Mini-Project by:          ||\n");
-	printf("\t\t||\t   Gilbert Parluhutan Siagian       ||\n");
-	printf("\t\t||\t	Alvin Audinata              ||\n");
-	printf("\t\t||__________________________________________||\n");
-	printf("Press Any Key To Continue");
+	banner();
 	system("color 1E");
 	fetch_char(&resp);
-	while(1){
-		if(main_menu()) break;
-	}
+	main_menu();
 	return;
 }
 
 int main(){
 	main_page();
 	clear_screen();
+	printf("Program selesai");
 	return 0;
 }
