@@ -107,11 +107,11 @@ int hasLen(char *str,int len){
 	return 0;
 }
 
-int parse_day(char day[]){
-	char list_of_day[][3]={"Min","Sen","Sel","Rab","Kam","Jum","Sab"};
+int parse_day(char *day){
+	char *list_of_day[]={"Min","Sen","Sel","Rab","Kam","Jum","Sab"};
 	int len=sizeof(list_of_day)/sizeof(list_of_day[0]);
 	for(int i=0;i<len;i++){
-		if(*list_of_day[i]==*day) return i;
+		if(strcmp(list_of_day[i],day)==0) return i;
 	}
 	return -1;
 }
@@ -432,7 +432,7 @@ char *parse_month(int mo){
 		"Januari","Februari","Maret","April","Mei","Juni",
 		"Juli","Agustus","September","Oktober","November","Desember"
 	};
-	return arr[mo];
+	return arr[mo-1];
 }
 
 void detail_presence(FILE *p,int mk){
